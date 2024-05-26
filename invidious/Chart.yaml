@@ -10,7 +10,7 @@ appVersion: v2.20240427
 dependencies:
   - name: postgresql
     version: ~14.3.1
-    repository: "https://charts.bitnami.com/bitnami/"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
     condition: postgresql.enabled
 
 engine: gotpl

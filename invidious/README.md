@@ -5,8 +5,9 @@ Easily deploy Invidious to Kubernetes.
 ## Installing Helm chart
 
 ```sh
-# Build Helm dependencies
-$ helm dep build
+# Add repo of Invidious helm charts
+$ helm repo add invidious https://charts-helm.invidious.io
+$ helm repo update
 
 # Add PostgreSQL init scripts
 $ kubectl create configmap invidious-postgresql-init \
@@ -21,14 +22,14 @@ $ kubectl create configmap invidious-postgresql-init \
   --from-file=../config/sql/playlist_videos.sql
 
 # Install Helm app to your Kubernetes cluster
-$ helm install invidious ./
+$ helm install invidious invidious/invidious
 ```
 
 ## Upgrading
 
 ```sh
 # Upgrading is easy, too!
-$ helm upgrade invidious ./
+$ helm upgrade invidious invidious/invidious
 ```
 
 ## Uninstall

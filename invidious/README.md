@@ -1,42 +1,64 @@
 # Invidious Helm chart
 
-Easily deploy Invidious to Kubernetes.
+This guide explains how to deploy Invidious to Kubernetes using the Invidious Helm chart.
 
-## Installing Helm chart
+## Installing
 
-```sh
-# Add repo of Invidious helm charts
-$ helm repo add invidious https://charts-helm.invidious.io
-$ helm repo update
+Follow these steps to install the Helm chart:
 
-# Add PostgreSQL init scripts
-$ kubectl create configmap invidious-postgresql-init \
-  --from-file=../config/sql/channels.sql \
-  --from-file=../config/sql/videos.sql \
-  --from-file=../config/sql/channel_videos.sql \
-  --from-file=../config/sql/users.sql \
-  --from-file=../config/sql/session_ids.sql \
-  --from-file=../config/sql/nonces.sql \
-  --from-file=../config/sql/annotations.sql \
-  --from-file=../config/sql/playlists.sql \
-  --from-file=../config/sql/playlist_videos.sql
+1. Add the Invidious Helm chart repository:
 
-# Install Helm app to your Kubernetes cluster
-$ helm install invidious invidious/invidious
-```
+   ```sh
+   $ helm repo add invidious https://charts-helm.invidious.io
+   $ helm repo update
+   ```
+
+2. Create a ConfigMap with the PostgreSQL initialization scripts:
+
+   ```sh
+   $ kubectl create configmap invidious-postgresql-init \
+     --from-file=../config/sql/channels.sql \
+     --from-file=../config/sql/videos.sql \
+     --from-file=../config/sql/channel_videos.sql \
+     --from-file=../config/sql/users.sql \
+     --from-file=../config/sql/session_ids.sql \
+     --from-file=../config/sql/nonces.sql \
+     --from-file=../config/sql/annotations.sql \
+     --from-file=../config/sql/playlists.sql \
+     --from-file=../config/sql/playlist_videos.sql
+   ```
+
+3. Install the Helm chart to your Kubernetes cluster:
+
+   ```sh
+   $ helm install invidious invidious/invidious
+   ```
 
 ## Upgrading
 
+To upgrade the Helm chart, run the following command:
+
 ```sh
-# Upgrading is easy, too!
 $ helm upgrade invidious invidious/invidious
 ```
 
-## Uninstall
+## Uninstalling
+
+To uninstall the Helm chart and remove all associated resources (except the database), execute:
 
 ```sh
-# Get rid of everything (except database)
 $ helm delete invidious
+```
 
-# To also delete the database, remove all invidious-postgresql PVCs
+### Removing `invidious-postgresql` PersistentVolumeClaims
+
+> [!CAUTION]
+> This action is irreversible. Ensure you have backed up any important data before proceeding.
+
+If you want to delete the Invidious PostgreSQL database along with the Helm chart, you need to remove the associated [PersistentVolumeClaims (PVCs)](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims). Deleting the PVCs will permanently remove the persistent storage used by the database.
+
+To delete the Invidious PostgreSQL database and its associated PVCs, run the following command:
+
+```sh
+$ kubectl delete pvc data-invidious-postgresql-0
 ```

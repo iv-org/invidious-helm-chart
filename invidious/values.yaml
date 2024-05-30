@@ -9,6 +9,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Setting replicaCount higher than 1 may cause PostgreSQL database deadlocks.
+# This happens when multiple Invidious processes simultaneously attempt to refresh channel subscriptions for users.
 replicaCount: 1
 
 autoscaling:
@@ -64,7 +66,7 @@ tolerations: []
 affinity: {}
 
 
-# See https://github.com/bitnami/charts/tree/master/bitnami/postgresql
+# Reference: https://github.com/bitnami/charts/tree/main/bitnami/postgresql
 postgresql:
   enabled: true
   image:
@@ -79,7 +81,7 @@ postgresql:
       password: kemal
       scriptsConfigMap: invidious-postgresql-init
 
-# Adapted from ../config/config.yml
+# Reference: https://github.com/iv-org/invidious/blob/master/config/config.example.yml
 config:
   db:
     user: kemal

@@ -48,6 +48,8 @@ resources: {}
   #   cpu: 800m
   #   memory: 512Mi
 
+deploymentLabels: {}
+
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000

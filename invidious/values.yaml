@@ -97,3 +97,10 @@ config:
   channel_threads: 1
   full_refresh: false
   feed_threads: 1
+
+sighelper:
+  enabled: true
+  image:
+    repository: quay.io/invidious/inv-sig-helper
+    tag: latest
+    pullPolicy: Always

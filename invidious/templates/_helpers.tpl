@@ -50,3 +50,20 @@ Selector labels
 app.kubernetes.io/name: {{ include "invidious.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Initialize default values and validate database configuration
+*/}}
+{{- define "invidious.init-defaults" -}}
+{{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
+{{- if .Values.postgresql.enabled }}
+    {{- if not .Values.config.db.host }}
+    {{- $_ := set .Values.config.db "host" (printf "%s-postgresql" .Release.Name) }}
+    {{- end }}
+{{- else }}
+{{/* Fail if external database host is not provided when in-chart PostgreSQL is disabled */}}
+    {{- if not .Values.config.db.host }}
+    {{- fail "config.db.host must be set when postgresql.enabled is false" }}
+    {{- end }}
+{{- end }}
+{{- end -}}

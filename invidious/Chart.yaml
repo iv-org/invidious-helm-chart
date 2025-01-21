@@ -4,7 +4,7 @@ description: Invidious is an alternative front-end to YouTube
 
 type: application
 
-version: 2.0.4
+version: 2.0.5
 appVersion: v2.20240427
 
 dependencies:
@@ -20,7 +20,7 @@ keywords:
   - proxy
   - video
   - privacy
-  
+
 home: https://invidious.io
 icon: https://raw.githubusercontent.com/iv-org/invidious/05988c1c49851b7d0094fca16aeaf6382a7f64ab/assets/favicon-32x32.png
 

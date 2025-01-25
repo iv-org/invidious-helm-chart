@@ -100,6 +100,9 @@ config:
 
 sighelper:
   enabled: true
+  resources: {}
+  service:
+    port: 12999
   image:
     repository: quay.io/invidious/inv-sig-helper
     tag: latest

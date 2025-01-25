@@ -70,15 +70,6 @@ spec:
               path: /
             periodSeconds: 5
             failureThreshold: 30
-        {{- if .Values.sighelper.enabled }}
-        - name: sighelper
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.sighelper.image.repository }}:{{ .Values.sighelper.image.tag }}"
-          imagePullPolicy: {{ .Values.sighelper.image.pullPolicy }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-        {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:

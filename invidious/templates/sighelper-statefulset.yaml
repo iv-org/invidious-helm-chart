@@ -1,0 +1,57 @@
+{{- if .Values.sighelper.enabled }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "invidious.fullname" . }}-sighelper
+  labels:
+    {{- include "invidious.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sighelper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "invidious.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: sighelper
+  serviceName: {{ template "invidious.fullname" . }}-sighelper
+  template:
+    metadata:
+      labels:
+        {{- include "invidious.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: sighelper
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: sighelper
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.sighelper.image.repository }}:{{ .Values.sighelper.image.tag }}"
+          imagePullPolicy: {{ .Values.sighelper.image.pullPolicy }}
+          args:
+            - "--tcp"
+            - "0.0.0.0:12999"
+          ports:
+            - name: sighelper
+              containerPort: 12999
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: 12999
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 12999
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.sighelper.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

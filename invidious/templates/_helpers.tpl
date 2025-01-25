@@ -70,7 +70,9 @@ Initialize default values and validate database configuration
     {{/* Set signature server if sighelper is enabled */}}
     {{- if .Values.sighelper.enabled }}
         {{- if not .Values.config.signature_server }}
-        {{- $_ := set .Values.config "signature_server" "localhost:12999" }}
+        {{- $serviceName := printf "%s-sighelper" (include "invidious.fullname" .) }}
+        {{- $servicePort := .Values.sighelper.service.port | default 12999 | int }}
+        {{- $_ := set .Values.config "signature_server" (printf "%s:%d" $serviceName $servicePort) }}
         {{- end }}
     {{- end }}
 {{- end -}}

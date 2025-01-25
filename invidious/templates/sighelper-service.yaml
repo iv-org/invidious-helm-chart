@@ -1,0 +1,19 @@
+{{- if .Values.sighelper.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "invidious.fullname" . }}-sighelper
+  labels:
+    {{- include "invidious.labels" . | nindent 4 }}
+    app.kubernetes.io/component: sighelper
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.sighelper.service.port }}
+      targetPort: 12999
+      protocol: TCP
+      name: sighelper
+  selector:
+    {{- include "invidious.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: sighelper
+{{- end }}

@@ -55,15 +55,24 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Initialize default values and validate database configuration
 */}}
 {{- define "invidious.init-defaults" -}}
-{{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
-{{- if .Values.postgresql.enabled }}
-    {{- if not .Values.config.db.host }}
-    {{- $_ := set .Values.config.db "host" (printf "%s-postgresql" .Release.Name) }}
+    {{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
+    {{- if .Values.postgresql.enabled }}
+        {{- if not .Values.config.db.host }}
+        {{- $_ := set .Values.config.db "host" (printf "%s-postgresql" .Release.Name) }}
+        {{- end }}
+    {{- else }}
+    {{/* Fail if external database host is not provided when in-chart PostgreSQL is disabled */}}
+        {{- if not .Values.config.db.host }}
+        {{- fail "config.db.host must be set when postgresql.enabled is false" }}
+        {{- end }}
     {{- end }}
-{{- else }}
-{{/* Fail if external database host is not provided when in-chart PostgreSQL is disabled */}}
-    {{- if not .Values.config.db.host }}
-    {{- fail "config.db.host must be set when postgresql.enabled is false" }}
+
+    {{/* Set signature server if sighelper is enabled */}}
+    {{- if .Values.sighelper.enabled }}
+        {{- if not .Values.config.signature_server }}
+        {{- $serviceName := printf "%s-sighelper" (include "invidious.fullname" .) }}
+        {{- $servicePort := .Values.sighelper.service.port | default 12999 | int }}
+        {{- $_ := set .Values.config "signature_server" (printf "%s:%d" $serviceName $servicePort) }}
+        {{- end }}
     {{- end }}
-{{- end }}
 {{- end -}}

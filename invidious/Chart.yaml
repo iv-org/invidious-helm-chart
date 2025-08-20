@@ -4,7 +4,7 @@ description: Invidious is an alternative front-end to YouTube
 
 type: application
 
-version: 2.2.0
+version: 2.3.0
 appVersion: v2.20240427
 
 dependencies:

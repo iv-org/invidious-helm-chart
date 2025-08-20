@@ -77,11 +77,6 @@ postgresql:
     username: kemal
     password: kemal
     database: invidious
-  primary:
-    initdb:
-      username: kemal
-      password: kemal
-      scriptsConfigMap: invidious-postgresql-init
 
 # Reference: https://github.com/iv-org/invidious/blob/master/config/config.example.yml
 config:

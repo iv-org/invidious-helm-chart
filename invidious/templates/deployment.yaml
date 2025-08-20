@@ -46,24 +46,12 @@ spec:
             - -c
             - 'until pg_isready -h "{{ .Values.config.db.host }}" -p "{{ .Values.config.db.port }}" -U "{{ .Values.config.db.user }}"; do echo waiting for database; sleep 2; done'
         - name: init-db
-          image: postgres:latest
-          env:
-            - name: PGPASSWORD
-              value: {{ .Values.config.db.password }}
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              for script in /init-scripts/*.sql; do
-                echo "Running $script";
-                psql -h {{ .Values.config.db.host }} \
-                     -p {{ .Values.config.db.port }} \
-                     -U {{ .Values.config.db.user }} \
-                     -d {{ .Values.config.db.dbname }} \
-                     -f "$script";
-              done
-          volumeMounts:
-            - name: init-scripts
-              mountPath: /init-scripts 
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          envFrom:
+            - secretRef:
+                name: {{ template "invidious.fullname" . }}
+          command: ["/sbin/tini", "--"]
+          args: ["/invidious/invidious", "--migrate"]
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -106,10 +94,6 @@ spec:
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      volumes:
-        - name: init-scripts
-          configMap:
-            name: invidious-postgresql-init
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}

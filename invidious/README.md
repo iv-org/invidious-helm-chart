@@ -19,6 +19,39 @@ Follow these steps to install the Helm chart:
    $ helm install invidious invidious/invidious
    ```
 
+## Database configuration
+
+The chart deploys PostgreSQL by default and derives the database settings (`config.db`) from `postgresql.auth`. If you change `postgresql.auth.username`, `postgresql.auth.password` or `postgresql.auth.database`, Invidious picks them up automatically.
+
+### Using an external database
+
+To use a database that is not managed by the chart, disable the in-chart PostgreSQL and either provide the connection parameters:
+
+```yaml
+postgresql:
+  enabled: false
+
+config:
+  db:
+    user: kemal
+    password: kemal
+    host: my-postgres.example.com
+    port: 5432
+    dbname: invidious
+```
+
+or a single connection URI:
+
+```yaml
+postgresql:
+  enabled: false
+
+config:
+  database_url: postgres://kemal:kemal@my-postgres.example.com:5432/invidious
+```
+
+Note that `config.database_url` and `config.db` are mutually exclusive - setting both will fail the templating.
+
 ## Upgrading
 
 To upgrade the Helm chart, run the following command:

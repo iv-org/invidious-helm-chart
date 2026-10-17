@@ -39,12 +39,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
-        - name: wait-for-postgresql
-          image: actions/pg_isready
-          command:
-            - /bin/bash
-            - -c
-            - 'until pg_isready -h "{{ .Values.config.db.host }}" -p "{{ .Values.config.db.port }}" -U "{{ .Values.config.db.user }}"; do echo waiting for database; sleep 2; done'
         - name: init-db
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           envFrom:

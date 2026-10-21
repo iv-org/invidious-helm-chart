@@ -65,20 +65,36 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.probes.readiness }}
           readinessProbe:
-            httpGet:
-              port: http
-              path: /
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.probes.liveness }}
           livenessProbe:
-            httpGet:
-              port: http
-              path: /
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.probes.startup }}
           startupProbe:
-            httpGet:
-              port: http
-              path: /
-            periodSeconds: 5
-            failureThreshold: 30
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- if .Values.companion.enabled }}
+        - name: companion
+          image: "{{ .Values.companion.image.repository }}:{{ .Values.companion.image.tag }}"
+          imagePullPolicy: {{ .Values.companion.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.companion.securityContext | nindent 12 }}
+          ports:
+            - name: companion
+              containerPort: 8282
+              protocol: TCP
+          env:
+            - name: SERVER_SECRET_KEY
+              value: {{ .Values.companion.secretKey | quote }}
+          {{- with .Values.companion.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:

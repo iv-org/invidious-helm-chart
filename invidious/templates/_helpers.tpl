@@ -123,4 +123,14 @@ Initialize default values and validate database configuration
         {{- $_ := set .Values.config "signature_server" (printf "%s:%d" $serviceName $servicePort) }}
         {{- end }}
     {{- end }}
+
+    {{/* Default invidious_companion config if companion sidecar is enabled */}}
+    {{- if .Values.companion.enabled }}
+        {{- if not .Values.config.invidious_companion }}
+        {{- $_ := set .Values.config "invidious_companion" (list (dict "private_url" "http://localhost:8282/companion")) }}
+        {{- end }}
+        {{- if not .Values.config.invidious_companion_key }}
+        {{- $_ := set .Values.config "invidious_companion_key" .Values.companion.secretKey }}
+        {{- end }}
+    {{- end }}
 {{- end -}}

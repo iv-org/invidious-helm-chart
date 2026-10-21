@@ -103,6 +103,52 @@ config:
 
 env: []
 
+# invidious-companion sidecar (replaces inv-sig-helper)
+# Reference: https://github.com/iv-org/invidious-companion
+companion:
+  enabled: false
+  image:
+    repository: quay.io/invidious/invidious-companion
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Secret key shared between invidious and the companion (SERVER_SECRET_KEY)
+  secretKey: ""
+  # Ingress exposing the companion publicly
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: companion-example.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  resources: {}
+  securityContext:
+    runAsUser: 10001
+    runAsGroup: 10001
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+probes:
+  readiness:
+    httpGet:
+      port: http
+      path: /
+  liveness:
+    httpGet:
+      port: http
+      path: /
+  startup:
+    httpGet:
+      port: http
+      path: /
+    periodSeconds: 5
+    failureThreshold: 30
+
 sighelper:
   enabled: true
   resources: {}

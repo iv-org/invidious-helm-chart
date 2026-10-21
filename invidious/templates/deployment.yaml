@@ -33,6 +33,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       enableServiceLinks: false
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.env }}
@@ -40,8 +41,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
+        - name: wait-for-postgresql
+          image: actions/pg_isready
+          {{- with .Values.initContainersSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - -c
+            - 'until pg_isready -h "{{ .Values.config.db.host }}" -p "{{ .Values.config.db.port }}" -U "{{ .Values.config.db.user }}"; do echo waiting for database; sleep 2; done'
         - name: init-db
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.initContainersSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ template "invidious.fullname" . }}

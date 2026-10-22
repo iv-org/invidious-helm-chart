@@ -126,9 +126,19 @@ Initialize default values and validate database configuration
 
     {{/* Default invidious_companion config if companion sidecar is enabled */}}
     {{- if .Values.companion.enabled }}
-        {{- if not .Values.config.invidious_companion }}
-        {{- $_ := set .Values.config "invidious_companion" (list (dict "private_url" "http://localhost:8282/companion")) }}
+        {{- $companion := dict }}
+        {{- if .Values.config.invidious_companion }}
+        {{- $companion = index .Values.config.invidious_companion 0 }}
         {{- end }}
+        {{- if not $companion.private_url }}
+        {{- $_ := set $companion "private_url" "http://localhost:8282/companion" }}
+        {{- end }}
+        {{- if and (not $companion.public_url) .Values.companion.ingress.enabled .Values.companion.ingress.hosts }}
+        {{- $scheme := ternary "https" "http" (not (empty .Values.companion.ingress.tls)) }}
+        {{- $host := (index .Values.companion.ingress.hosts 0).host }}
+        {{- $_ := set $companion "public_url" (printf "%s://%s/companion" $scheme $host) }}
+        {{- end }}
+        {{- $_ := set .Values.config "invidious_companion" (list $companion) }}
         {{- if not (regexMatch "^[a-zA-Z0-9]{16}$" .Values.companion.secretKey) }}
         {{- fail "companion.secretKey is required when companion.enabled=true and must be exactly 16 alphanumeric characters (e.g. 'pwgen 16 1')" }}
         {{- end }}

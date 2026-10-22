@@ -105,7 +105,10 @@ spec:
               protocol: TCP
           env:
             - name: SERVER_SECRET_KEY
-              value: {{ .Values.companion.secretKey | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "invidious.fullname" . }}
+                  key: companion-secret-key
           {{- with .Values.companion.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

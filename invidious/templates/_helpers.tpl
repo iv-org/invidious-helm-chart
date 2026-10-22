@@ -58,8 +58,10 @@ Initialize default values and validate database configuration
     {{- $databaseUrl := .Values.config.database_url | default "" }}
     {{- $db := .Values.config.db | default dict }}
 
-    {{/* config.database_url and config.db are mutually exclusive */}}
-    {{- if and $databaseUrl $db }}
+    {{/* config.database_url and config.db are mutually exclusive.
+         An explicit `db: null` counts as unset, so that users can clear
+         the key from their values file when switching to database_url. */}}
+    {{- if and $databaseUrl (kindIs "map" (get .Values.config "db")) }}
     {{- fail "use either config.database_url or config.db, not both" }}
     {{- end }}
 

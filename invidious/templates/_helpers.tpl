@@ -126,51 +126,11 @@ Initialize default values and validate database configuration
 
     {{/* Default invidious_companion config if companion sidecar is enabled */}}
     {{- if .Values.companion.enabled }}
-        {{- $entries := .Values.config.invidious_companion | default (list dict) }}
-        {{- $privateUrl := "http://localhost:8282/companion" }}
-        {{- $publicUrl := "" }}
-        {{- if .Values.companion.ingress.enabled }}
-            {{- $hostEntry := index .Values.companion.ingress.hosts 0 | default dict }}
-            {{- $host := $hostEntry.host | default "" }}
-            {{- if $host }}
-                {{/* Ensure at least one Prefix path routes /companion to the sidecar */}}
-                {{- $pathType := "" }}
-                {{- $implSpecific := false }}
-                {{- range $p := ($hostEntry.paths | default (list dict)) }}
-                    {{- $pt := $p.pathType | default "Prefix" }}
-                    {{- if eq $pt "ImplementationSpecific" }}
-                        {{- $implSpecific = true }}
-                    {{- else if and (not $pathType) (or (eq $p.path "/") (hasPrefix "/companion" $p.path)) }}
-                        {{- $pathType = $pt }}
-                    {{- end }}
-                {{- end }}
-                {{- if and $pathType (ne $pathType "Prefix") }}
-                    {{- fail (printf "companion.ingress: path routing /companion on host %q must use pathType Prefix" $host) }}
-                {{- end }}
-                {{- if and (not $pathType) (not $implSpecific) }}
-                    {{- fail (printf "companion.ingress: no path on host %q routes /companion (add a path of / or /companion, or set an explicit config.invidious_companion public_url)" $host) }}
-                {{- end }}
-                {{/* Only use https when a TLS entry covers this host */}}
-                {{- $scheme := "http" }}
-                {{- range $t := .Values.companion.ingress.tls }}
-                    {{- if has $host ($t.hosts | default (list)) }}
-                        {{- $scheme = "https" }}
-                    {{- end }}
-                {{- end }}
-                {{- $publicUrl = printf "%s://%s/companion" $scheme $host }}
-            {{- end }}
+        {{/* Default to the pod-local sidecar when not configured; a configured
+             list (including public_url and extra entries) is used as-is */}}
+        {{- if not .Values.config.invidious_companion }}
+        {{- $_ := set .Values.config "invidious_companion" (list (dict "private_url" "http://localhost:8282/companion")) }}
         {{- end }}
-        {{- $out := list }}
-        {{- range $entry := $entries }}
-            {{- if not $entry.private_url }}
-            {{- $_ := set $entry "private_url" $privateUrl }}
-            {{- end }}
-            {{- if and (not $entry.public_url) $publicUrl }}
-            {{- $_ := set $entry "public_url" $publicUrl }}
-            {{- end }}
-            {{- $out = append $out $entry }}
-        {{- end }}
-        {{- $_ := set .Values.config "invidious_companion" $out }}
         {{- if not (regexMatch "^[a-zA-Z0-9]{16}$" .Values.companion.secretKey) }}
         {{- fail "companion.secretKey is required when companion.enabled=true and must be exactly 16 alphanumeric characters (e.g. 'pwgen 16 1')" }}
         {{- end }}

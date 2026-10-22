@@ -113,7 +113,22 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if .Values.companion.cache.enabled }}
+          volumeMounts:
+            - name: companion-youtubei-cache
+              mountPath: /var/tmp/youtubei.js
+          {{- end }}
         {{- end }}
+      {{- if .Values.companion.cache.enabled }}
+      volumes:
+        - name: companion-youtubei-cache
+          {{- with .Values.companion.cache.sizeLimit }}
+          emptyDir:
+            sizeLimit: {{ . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:

@@ -139,9 +139,21 @@ companion:
             pathType: Prefix
     tls: []
   resources: {}
+  # EmptyDir cache for the youtubei.js library (required with the default
+  # readOnlyRootFilesystem). Disable only if you provide your own writable
+  # mount at /var/tmp/youtubei.js.
+  # Note: the companion writes here via the pod's fsGroup (supplementary
+  # group), so podSecurityContext.fsGroup must stay set (default: 1000).
+  cache:
+    enabled: true
+    # sizeLimit: ""
   securityContext:
     runAsUser: 10001
     runAsGroup: 10001
+    # Requires companion.cache.enabled (or another writable mount at
+    # /var/tmp/youtubei.js) — the youtubei.js cache is the only path
+    # the companion writes to.
+    readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
     capabilities:
       drop:

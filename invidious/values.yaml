@@ -99,6 +99,12 @@ config:
   #   dbname: invidious
   port: 3000
   domain: ""
+  # Companion integration (when companion.enabled=true, private_url defaults
+  # to the pod-local sidecar; public_url must be set explicitly):
+  # invidious_companion:
+  #   - private_url: "http://localhost:8282/companion"
+  #     public_url: "https://companion.example.com/companion"
+  # invidious_companion_key is set from companion.secretKey automatically.
   https_only: false
   channel_threads: 1
   full_refresh: false

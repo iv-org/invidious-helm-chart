@@ -7,7 +7,7 @@ metadata:
     {{- include "invidious.labels" . | nindent 4 }}
     app.kubernetes.io/component: companion
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.companion.service.type }}
   ports:
     - name: companion
       port: 8282

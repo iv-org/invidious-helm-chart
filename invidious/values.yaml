@@ -114,8 +114,13 @@ companion:
     repository: quay.io/invidious/invidious-companion
     tag: latest
     pullPolicy: IfNotPresent
-  # Secret key shared between invidious and the companion (SERVER_SECRET_KEY)
+  # Secret key shared between invidious and the companion (SERVER_SECRET_KEY).
+  # Required when companion is enabled; must be exactly 16 characters.
   secretKey: ""
+  # Service for the companion. Keep ClusterIP and expose it via the ingress below;
+  # only change this if you expose the companion without an ingress.
+  service:
+    type: ClusterIP
   # Ingress exposing the companion publicly
   ingress:
     enabled: false

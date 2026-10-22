@@ -55,15 +55,63 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Initialize default values and validate database configuration
 */}}
 {{- define "invidious.init-defaults" -}}
-    {{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
-    {{- if .Values.postgresql.enabled }}
-        {{- if not .Values.config.db.host }}
-        {{- $_ := set .Values.config.db "host" (printf "%s-postgresql" .Release.Name) }}
-        {{- end }}
+    {{- $databaseUrl := .Values.config.database_url | default "" }}
+    {{- $db := .Values.config.db | default dict }}
+
+    {{/* config.database_url and config.db are mutually exclusive.
+         An explicit `db: null` counts as unset, so that users can clear
+         the key from their values file when switching to database_url. */}}
+    {{- if and $databaseUrl (kindIs "map" (get .Values.config "db")) }}
+    {{- fail "use either config.database_url or config.db, not both" }}
+    {{- end }}
+
+    {{- if $databaseUrl }}
+    {{/* database_url takes precedence over db, matching upstream Invidious behavior */}}
+    {{- $_ := unset .Values.config "db" }}
     {{- else }}
-    {{/* Fail if external database host is not provided when in-chart PostgreSQL is disabled */}}
-        {{- if not .Values.config.db.host }}
-        {{- fail "config.db.host must be set when postgresql.enabled is false" }}
+    {{/* database_url is not used, so don't render an empty value for it */}}
+    {{- $_ := unset .Values.config "database_url" }}
+
+        {{- if not $db }}
+        {{- $_ := set .Values.config "db" dict }}
+        {{- end }}
+
+        {{/* Treat explicitly empty values (e.g. `port: ""`) as missing */}}
+        {{- range $key, $value := .Values.config.db }}
+        {{- if not $value }}
+        {{- $_ := unset $.Values.config.db $key }}
+        {{- end }}
+        {{- end }}
+
+        {{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
+        {{- if .Values.postgresql.enabled }}
+            {{- if not (hasKey .Values.config.db "host") }}
+            {{- $_ := set .Values.config.db "host" (printf "%s-postgresql" .Release.Name) }}
+            {{- end }}
+            {{- if not (hasKey .Values.config.db "user") }}
+            {{- $_ := set .Values.config.db "user" .Values.postgresql.auth.username }}
+            {{- end }}
+            {{- if not (hasKey .Values.config.db "password") }}
+            {{- $_ := set .Values.config.db "password" .Values.postgresql.auth.password }}
+            {{- end }}
+            {{- if not (hasKey .Values.config.db "dbname") }}
+            {{- $_ := set .Values.config.db "dbname" .Values.postgresql.auth.database }}
+            {{- end }}
+        {{- else }}
+        {{/* Fail if external database settings are incomplete */}}
+            {{- $missing := list }}
+            {{- range $key := list "user" "password" "host" "dbname" }}
+            {{- if not (hasKey $.Values.config.db $key) }}
+            {{- $missing = append $missing $key }}
+            {{- end }}
+            {{- end }}
+            {{- if $missing }}
+            {{- fail (printf "config.db must contain %s when postgresql.enabled is false, or use config.database_url instead" (join ", " $missing)) }}
+            {{- end }}
+        {{- end }}
+
+        {{- if not (hasKey .Values.config.db "port") }}
+        {{- $_ := set .Values.config.db "port" 5432 }}
         {{- end }}
     {{- end }}
 

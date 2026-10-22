@@ -80,12 +80,20 @@ postgresql:
 
 # Reference: https://github.com/iv-org/invidious/blob/master/config/config.example.yml
 config:
-  db:
-    user: kemal
-    password: kemal
-    host: ""
-    port: 5432
-    dbname: invidious
+  # Database configuration using a single URI, an alternative to 'db'.
+  # Mutually exclusive with 'db' - setting both will fail templating.
+  # Example: postgres://kemal:kemal@invidious-postgresql:5432/invidious
+  database_url: ""
+  # Database configuration with separate parameters.
+  # When 'postgresql.enabled' is true, missing values are derived
+  # from 'postgresql.auth'. When 'postgresql.enabled' is false,
+  # user, password, host and dbname are all required.
+  # db:
+  #   user: kemal
+  #   password: kemal
+  #   host: invidious-postgresql
+  #   port: 5432
+  #   dbname: invidious
   port: 3000
   domain: ""
   https_only: false

@@ -129,8 +129,12 @@ Initialize default values and validate database configuration
         {{- if not .Values.config.invidious_companion }}
         {{- $_ := set .Values.config "invidious_companion" (list (dict "private_url" "http://localhost:8282/companion")) }}
         {{- end }}
-        {{- if not .Values.config.invidious_companion_key }}
-        {{- $_ := set .Values.config "invidious_companion_key" .Values.companion.secretKey }}
+        {{- if not (regexMatch "^[a-zA-Z0-9]{16}$" .Values.companion.secretKey) }}
+        {{- fail "companion.secretKey is required when companion.enabled=true and must be exactly 16 alphanumeric characters (e.g. 'pwgen 16 1')" }}
         {{- end }}
+        {{- if and .Values.config.invidious_companion_key (ne .Values.config.invidious_companion_key .Values.companion.secretKey) }}
+        {{- fail "config.invidious_companion_key and companion.secretKey must match; set only companion.secretKey" }}
+        {{- end }}
+        {{- $_ := set .Values.config "invidious_companion_key" .Values.companion.secretKey }}
     {{- end }}
 {{- end -}}

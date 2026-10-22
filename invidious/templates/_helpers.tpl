@@ -76,6 +76,13 @@ Initialize default values and validate database configuration
         {{- $_ := set .Values.config "db" dict }}
         {{- end }}
 
+        {{/* Treat explicitly empty values (e.g. `port: ""`) as missing */}}
+        {{- range $key, $value := .Values.config.db }}
+        {{- if not $value }}
+        {{- $_ := unset $.Values.config.db $key }}
+        {{- end }}
+        {{- end }}
+
         {{/* Set default PostgreSQL host if using in-chart PostgreSQL */}}
         {{- if .Values.postgresql.enabled }}
             {{- if not (hasKey .Values.config.db "host") }}

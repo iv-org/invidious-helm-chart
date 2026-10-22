@@ -1,0 +1,37 @@
+{{- if and .Values.companion.enabled .Values.companion.ingress.enabled }}
+{{- $companionFullName := printf "%s-companion" (include "invidious.fullname" .) -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $companionFullName }}
+  labels:
+    {{- include "invidious.labels" . | nindent 4 }}
+    app.kubernetes.io/component: companion
+  {{- with .Values.companion.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.companion.ingress.className }}
+  ingressClassName: {{ .Values.companion.ingress.className }}
+  {{- end }}
+  {{- if .Values.companion.ingress.tls }}
+  tls:
+    {{- toYaml .Values.companion.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.companion.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ $companionFullName }}
+                port:
+                  number: 8282
+          {{- end }}
+    {{- end }}
+{{- end }}

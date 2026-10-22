@@ -6,6 +6,7 @@ type: application
 
 version: 2.4.0
 appVersion: v2.20240427
+kubeVersion: ">=1.19-0"
 
 dependencies:
   - name: postgresql

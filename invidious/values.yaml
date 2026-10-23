@@ -53,7 +53,10 @@ deploymentLabels: {}
 podSecurityContext:
   runAsUser: 1000
   runAsGroup: 1000
+  runAsNonRoot: true
   fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
   allowPrivilegeEscalation: false
@@ -96,12 +99,103 @@ config:
   #   dbname: invidious
   port: 3000
   domain: ""
+  # Companion integration (when companion.enabled=true, private_url defaults
+  # to the pod-local sidecar; public_url must be set explicitly):
+  # invidious_companion:
+  #   - private_url: "http://localhost:8282/companion"
+  #     public_url: "https://companion.example.com/companion"
+  # invidious_companion_key is set from companion.secretKey automatically.
   https_only: false
   channel_threads: 1
   full_refresh: false
   feed_threads: 1
 
 env: []
+
+# invidious-companion sidecar (replaces inv-sig-helper)
+# Reference: https://github.com/iv-org/invidious-companion
+companion:
+  enabled: false
+  image:
+    repository: quay.io/invidious/invidious-companion
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Secret key shared between invidious and the companion (SERVER_SECRET_KEY).
+  # Required when companion is enabled; must be exactly 16 characters.
+  secretKey: ""
+  # Service for the companion. Keep ClusterIP and expose it via the ingress below;
+  # only change this if you expose the companion without an ingress.
+  service:
+    type: ClusterIP
+  # Ingress exposing the companion publicly
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: companion-example.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  resources: {}
+  # EmptyDir cache for the youtubei.js library (required with the default
+  # readOnlyRootFilesystem). Disable only if you provide your own writable
+  # mount at /var/tmp/youtubei.js.
+  # Note: the companion writes here via the pod's fsGroup (supplementary
+  # group), so podSecurityContext.fsGroup must stay set (default: 1000).
+  cache:
+    enabled: true
+    # sizeLimit: ""
+  securityContext:
+    runAsUser: 10001
+    runAsGroup: 10001
+    # Requires companion.cache.enabled (or another writable mount at
+    # /var/tmp/youtubei.js) — the youtubei.js cache is the only path
+    # the companion writes to.
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+# SecurityContext applied to the chart's init containers
+initContainersSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+automountServiceAccountToken: false
+
+podAnnotations: {}
+
+podLabels: {}
+
+# Probes are merged with these defaults: overriding with a different handler
+# (e.g. tcpSocket) keeps the default httpGet too, which Kubernetes rejects.
+# Explicitly null the default handler when switching, e.g.:
+#   probes:
+#     readiness:
+#       httpGet: null
+#       tcpSocket:
+#         port: http
+# Set a probe to null (e.g. `probes: {startup: null}`) to disable it.
+probes:
+  readiness:
+    httpGet:
+      port: http
+      path: /
+  liveness:
+    httpGet:
+      port: http
+      path: /
+  startup:
+    httpGet:
+      port: http
+      path: /
+    periodSeconds: 5
+    failureThreshold: 30
 
 sighelper:
   enabled: true

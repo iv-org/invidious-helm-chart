@@ -17,10 +17,11 @@ spec:
       {{- include "invidious.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
+        kubectl.kubernetes.io/default-container: {{ .Chart.Name }}
+        {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
       labels:
         {{- include "invidious.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
@@ -32,6 +33,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       enableServiceLinks: false
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.env }}
@@ -39,8 +41,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
+        - name: wait-for-postgresql
+          image: actions/pg_isready
+          {{- with .Values.initContainersSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - -c
+            - 'until pg_isready -h "{{ .Values.config.db.host }}" -p "{{ .Values.config.db.port }}" -U "{{ .Values.config.db.user }}"; do echo waiting for database; sleep 2; done'
         - name: init-db
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.initContainersSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ template "invidious.fullname" . }}
@@ -65,20 +81,54 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.probes.readiness }}
           readinessProbe:
-            httpGet:
-              port: http
-              path: /
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.probes.liveness }}
           livenessProbe:
-            httpGet:
-              port: http
-              path: /
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.probes.startup }}
           startupProbe:
-            httpGet:
-              port: http
-              path: /
-            periodSeconds: 5
-            failureThreshold: 30
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        {{- if .Values.companion.enabled }}
+        - name: companion
+          image: "{{ .Values.companion.image.repository }}:{{ .Values.companion.image.tag }}"
+          imagePullPolicy: {{ .Values.companion.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.companion.securityContext | nindent 12 }}
+          ports:
+            - name: companion
+              containerPort: 8282
+              protocol: TCP
+          env:
+            - name: SERVER_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "invidious.fullname" . }}
+                  key: companion-secret-key
+          {{- with .Values.companion.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.companion.cache.enabled }}
+          volumeMounts:
+            - name: companion-youtubei-cache
+              mountPath: /var/tmp/youtubei.js
+          {{- end }}
+        {{- end }}
+      {{- if .Values.companion.cache.enabled }}
+      volumes:
+        - name: companion-youtubei-cache
+          {{- with .Values.companion.cache.sizeLimit }}
+          emptyDir:
+            sizeLimit: {{ . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
       restartPolicy: Always
       {{- with .Values.nodeSelector }}
       nodeSelector:

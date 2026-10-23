@@ -123,4 +123,20 @@ Initialize default values and validate database configuration
         {{- $_ := set .Values.config "signature_server" (printf "%s:%d" $serviceName $servicePort) }}
         {{- end }}
     {{- end }}
+
+    {{/* Default invidious_companion config if companion sidecar is enabled */}}
+    {{- if .Values.companion.enabled }}
+        {{/* Default to the pod-local sidecar when not configured; a configured
+             list (including public_url and extra entries) is used as-is */}}
+        {{- if not .Values.config.invidious_companion }}
+        {{- $_ := set .Values.config "invidious_companion" (list (dict "private_url" "http://localhost:8282/companion")) }}
+        {{- end }}
+        {{- if not (regexMatch "^[a-zA-Z0-9]{16}$" .Values.companion.secretKey) }}
+        {{- fail "companion.secretKey is required when companion.enabled=true and must be exactly 16 alphanumeric characters (e.g. 'pwgen 16 1')" }}
+        {{- end }}
+        {{- if and .Values.config.invidious_companion_key (ne .Values.config.invidious_companion_key .Values.companion.secretKey) }}
+        {{- fail "config.invidious_companion_key and companion.secretKey must match; set only companion.secretKey" }}
+        {{- end }}
+        {{- $_ := set .Values.config "invidious_companion_key" .Values.companion.secretKey }}
+    {{- end }}
 {{- end -}}
